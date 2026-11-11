@@ -2,6 +2,10 @@
 
 基于 Playwright 的闲鱼自动化 MCP 服务，当前重点可用能力是搜索、登录状态检查、可发送会话筛选、消息发送/回读，以及基础商品分析。
 
+> **本仓库来源**：上游 [A-utumn/xianyu-mcp](https://github.com/A-utumn/xianyu-mcp)（MIT）的完整导入，
+> 由 [@zhangjiabo522](https://github.com/zhangjiabo522) 做了可运行性修复。
+> 详细安装步骤见 [INSTALL.md](INSTALL.md)，改动清单见文末「相对上游的改动」。
+
 ## 当前状态
 
 - 搜索链路已按当前 `goofish.com` 页面结构修复，可返回真实商品结果。
@@ -13,14 +17,17 @@
 ## 快速开始
 
 ```bash
-uv sync
-playwright install chromium
-python scripts/login.py
-python scripts/check_status.py
-python src/xianyu_mcp/server.py
+python3 -m venv .venv
+.venv/bin/pip install -e .
+.venv/bin/pip install "mcp>=1.0,<2"   # 必需：mcp 2.x 删除了 mcp.server.fastmcp
+.venv/bin/playwright install chromium
+
+.venv/bin/python scripts/login.py
+.venv/bin/python scripts/check_status.py
+.venv/bin/xianyu-mcp                  # 或 .venv/bin/python src/xianyu_mcp/server.py
 ```
 
-扫码登录后，Cookie 会保存在 `cookies/`。
+扫码登录后，Cookie 会保存在 `cookies/`。完整说明见 [INSTALL.md](INSTALL.md)。
 
 ## 配置
 
@@ -60,7 +67,7 @@ python tests/test_analytics_tools.py
 python tests/test_all.py
 ```
 
-测试脚本说明见 [tests/README.md](C:/Users/Administrator/.openclaw/workspace/xianyu-mcp/tests/README.md)。
+测试脚本说明见 [tests/README.md](tests/README.md)。
 
 ## 目录
 
@@ -72,3 +79,15 @@ python tests/test_all.py
 ## 说明
 
 本项目仅供学习和自动化研究使用。请自行控制访问频率，并遵守目标平台规则。
+
+## 相对上游的改动
+
+1. **stdio 入口修复**：`main_async()` 原来只 `await stop_event.wait()`，从未启动
+   transport，MCP 客户端无法连接；改为 `await mcp.run_stdio_async()`。
+2. **依赖上限**：`mcp>=1.0.0` → `mcp>=1.0.0,<2`（mcp 2.x 已移除
+   `mcp.server.fastmcp`，会直接 `ImportError`）。
+3. **`.env.example` 修正**：前缀 `XIANIU_` 拼错（代码读 `XIANYU_`），
+   键名重复为 `XIANYU_XIANIU_URL`，URL 指向过期的 `2.taobao.com`；
+   已统一为 `XIANYU_XIANYU_URL` / `XIANYU_XIANYU_MOBILE_URL` 并指向 `goofish.com`。
+4. **补充** `LICENSE`（MIT，含上游版权声明）与 `INSTALL.md`（安装/验证记录）。
+5. `tests/README.md` 链接从本机绝对路径改为相对路径。

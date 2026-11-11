@@ -845,21 +845,8 @@ async def main_async():
     logger.info("按 Ctrl+C 停止服务器")
     logger.info("=" * 60)
     
-    # 保持服务器运行
-    import signal
-    
-    stop_event = asyncio.Event()
-    
-    def signal_handler(sig, frame):
-        logger.info("收到停止信号，正在关闭...")
-        stop_event.set()
-    
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    
-    # 等待停止信号
-    await stop_event.wait()
-    logger.info("服务器已停止")
+    # 通过 stdio 传输启动 MCP 服务（FastMCP 自带信号与生命周期管理）
+    await mcp.run_stdio_async()
 
 
 def main():
